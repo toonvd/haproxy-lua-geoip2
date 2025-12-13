@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y lua5.4 mmdb-bin jq curl
+
+    - name: Download test databases
+      run: |
+        wget https://raw.githubusercontent.com/maxmind/MaxMind-DB/main/test-data/GeoLite2-Country-Test.mmdb -O GeoLite2-Country.mmdb
+        wget https://raw.githubusercontent.com/maxmind/MaxMind-DB/main/test-data/GeoLite2-ASN-Test.mmdb -O GeoLite2-ASN.mmdb
+
+    - name: Extract test IPs
+      run: |
+        # Extract all IPs from country test data
+        curl -s https://raw.githubusercontent.com/maxmind/MaxMind-DB/main/source-data/GeoLite2-Country-Test.json | \
+          jq -r '.[] | keys[]' | sed 's|/.*||' > test_ips.txt
+        # Extract all IPs from ASN test data
+        curl -s https://raw.githubusercontent.com/maxmind/MaxMind-DB/main/source-data/GeoLite2-ASN-Test.json | \
+          jq -r '.[] | keys[]' | sed 's|/.*||' >> test_ips.txt
+        # Unique IPs
+        sort test_ips.txt | uniq > unique_ips.txt
+
+    - name: Run validation
+      run: |
+        cd tests
+        chmod +x validate_mmdb_whois.sh
+        ./validate_mmdb_whois.sh -f ../unique_ips.txt

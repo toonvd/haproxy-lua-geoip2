@@ -1,0 +1,25 @@
+name: Format
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        curl -L https://github.com/JohnnyMorganz/StyLua/releases/download/v0.20.0/stylua-linux-x86_64.zip -o stylua.zip
+        unzip stylua.zip
+        sudo mv stylua /usr/local/bin/
+        echo "/usr/local/bin" >> $GITHUB_PATH
+
+    - name: Check Lua formatting
+      run: |
+        stylua --check haproxy_mmdb.lua mmdb.lua tests/mmdb_validate.lua
