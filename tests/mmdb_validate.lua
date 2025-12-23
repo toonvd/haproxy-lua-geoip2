@@ -17,11 +17,12 @@ end
 
 local start = os.clock()
 
+local method = ip:match(":") and "search_ipv6" or "search_ipv4"
 local result
 if db_type == "country" then
-	result = db_country:search_ipv4(ip)
+	result = db_country[method](db_country, ip)
 elseif db_type == "asn" then
-	result = db_asn:search_ipv4(ip)
+	result = db_asn[method](db_asn, ip)
 else
 	print("ERROR: Unknown db_type")
 	os.exit(1)
